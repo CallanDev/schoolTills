@@ -4,156 +4,140 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>School Till System</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-body { font-family:'Roboto',sans-serif; margin:0; padding:0; background:#f0f2f5; }
-header { background:#1e1e2f; color:#fff; padding:15px; text-align:center; font-size:1.5em; }
-#loginOverlay, .popup { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:999; }
-#loginBox, .popupContent { background:#fff; padding:30px; border-radius:10px; width:500px; max-height:80%; overflow-y:auto; text-align:center; box-shadow:0 0 20px rgba(0,0,0,0.3); }
-#loginBox input, #loginBox button, .popupContent input, .popupContent select, .popupContent button { width:80%; padding:10px; margin:10px 0; border-radius:5px; border:1px solid #ccc; }
-#loginBox button, .popupContent button { width:auto; background:#1e1e2f; color:#fff; border:none; cursor:pointer; font-weight:700; }
-.hidden { display:none; }
-#nav { background:#2b2b45; padding:10px; display:flex; gap:10px; }
-#nav button { padding:10px 15px; border:none; border-radius:5px; cursor:pointer; background:#4b4b7b; color:#fff; font-weight:600; }
-#main { padding:20px; }
-.page { display:none; }
-.active { display:block; }
-#itemsGrid, #parentItemsGrid, #backofficeItemsGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:15px; }
-.itemBtn { padding:20px; background:#fff; border:none; border-radius:10px; cursor:pointer; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center; transition:0.2s; position:relative; }
-.itemBtn:hover { transform:scale(1.05); background:#e3e3e3; }
-.removeBtn { position:absolute; top:5px; right:5px; background:red; color:#fff; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; }
-#basket, #backofficeTables, #parentBasket { margin-top:20px; background:#fff; padding:15px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-#basket h3, #backofficeTables h3 { margin-top:0; }
-.studentEntry, .alert { padding:10px; margin:5px 0; cursor:pointer; border-radius:5px; }
-.studentEntry:hover { background:#f0f0f0; }
-table { width:100%; border-collapse:collapse; margin-top:10px; }
-table, th, td { border:1px solid #ccc; }
-th, td { padding:8px; text-align:left; }
-th { background:#4b4b7b; color:#fff; }
-.draggable { cursor:grab; }
+body {font-family:Arial,sans-serif;margin:0;background:#f0f2f5;}
+header {background:#1e1e2f;color:#fff;padding:15px;text-align:center;font-size:1.5em;}
+#loginOverlay, .popup {position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:999;}
+#loginBox, .popupContent {background:#fff;padding:20px;border-radius:10px;width:400px;max-height:90%;overflow-y:auto;text-align:center;}
+#loginBox input, .popupContent input, .popupContent select, #loginBox button, .popupContent button {width:80%;margin:10px 0;padding:10px;border-radius:5px;border:1px solid #ccc;}
+#loginBox button, .popupContent button {background:#1e1e2f;color:#fff;border:none;cursor:pointer;}
+#nav {background:#2b2b45;padding:10px;display:flex;gap:10px;align-items:center;}
+#nav button {padding:10px 15px;border:none;border-radius:5px;cursor:pointer;background:#4b4b7b;color:#fff;}
+.page {display:none;padding:20px;}
+.active {display:block;}
+#itemsGrid, #preorderItemsGrid {display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:20px;}
+.itemBtn {padding:15px;background:#fff;border-radius:10px;cursor:pointer;position:relative;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+.removeBtn {position:absolute;top:5px;right:5px;background:red;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;}
+table {width:100%;border-collapse:collapse;margin-top:10px;}
+table, th, td {border:1px solid #ccc;}
+th, td {padding:5px;text-align:left;}
+th {background:#4b4b7b;color:#fff;}
+.hidden {display:none;}
 </style>
 </head>
 <body>
+
 <header>School Till System</header>
 
-<!-- Login Overlay -->
+<!-- LOGIN -->
 <div id="loginOverlay">
   <div id="loginBox">
     <h2>Login</h2>
     <input type="text" id="username" placeholder="Username">
     <input type="password" id="password" placeholder="Password">
     <button onclick="login()">Login</button>
-    <p id="loginError" style="color:red; display:none;">Invalid credentials</p>
+    <p id="loginError" style="color:red;display:none;">Invalid credentials</p>
   </div>
 </div>
 
-<!-- Navigation -->
+<!-- NAV -->
 <div id="nav" class="hidden">
   <button onclick="showPage('till')">Till</button>
-  <button onclick="showPage('backoffice')">Back Office</button>
-  <button onclick="showPage('parentPreorder')">Parent Pre-Order</button>
+  <button id="backOfficeBtn" onclick="showPage('backoffice')">Back Office</button>
+  <button id="parentPreorderBtn" onclick="showPage('parentPreorder')">Parent Pre-Order</button>
   <button onclick="showPage('settings')">Settings</button>
+  <button onclick="logout()">Logout</button>
 </div>
 
-<!-- Main Pages -->
+<!-- MAIN PAGES -->
 <div id="main">
-  <!-- Till Page -->
+  <!-- Till -->
   <div id="till" class="page">
     <h2>Till</h2>
-    <div>
-      <label>Student Name: <input type="text" id="tillStudentName" oninput="checkTillReady()"></label>
-      <label>Meal Time: 
-        <select id="tillMealTime" onchange="checkTillReady()">
-          <option value="">Select</option>
-          <option value="Breakfast">Breakfast</option>
-          <option value="Break">Break</option>
-          <option value="Lunch">Lunch</option>
-        </select>
-      </label>
-      <label>Date: <input type="date" id="tillDate" onchange="checkTillReady()"></label>
-      <button id="startTransactionBtn" onclick="startTillTransaction()" disabled>Start Transaction</button>
-    </div>
-    <div id="itemsGrid"></div>
-    <div id="basket">
-      <h3>Basket</h3>
-      <ul id="basketList"></ul>
-      <p>Total: £<span id="basketTotal">0.00</span></p>
-      <button onclick="checkoutTill()">Checkout</button>
-    </div>
-  </div>
-
-  <!-- Back Office Page -->
-  <div id="backoffice" class="page">
-    <h2>Back Office</h2>
-    <div id="backofficeTables">
-      <h3>Items</h3>
-      <button onclick="openItemPopup()">Add Item</button>
-      <button onclick="exportItemsCSV()">Export Items CSV</button>
-      <button onclick="exportItemsPDF()">Export Items PDF</button>
-      <input type="file" id="importItemsFile" onchange="importItemsCSV(event)">
-      <table id="itemsTable"><thead><tr><th>Code</th><th>Name</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody></tbody></table>
-      <h3>Students</h3>
-      <button onclick="openStudentPopup()">Add Student</button>
-      <button onclick="exportStudentsCSV()">Export Students CSV</button>
-      <button onclick="exportStudentsPDF()">Export Students PDF</button>
-      <input type="file" id="importStudentsFile" onchange="importStudentsCSV(event)">
-      <table id="studentsTable"><thead><tr><th>Name</th><th>Type</th><th>Year</th><th>Balance</th><th>No School Food</th><th>Parent Approval</th><th>Actions</th></tr></thead><tbody></tbody></table>
-    </div>
-  </div>
-
-  <!-- Parent Pre-Order Page -->
-  <div id="parentPreorder" class="page">
-    <h2>Parent Pre-Order</h2>
-    <label>Student Name: <input type="text" id="parentStudentName" oninput="checkParentReady()"></label>
+    <label>Student Name: <input type="text" id="tillStudent" oninput="checkTillReady()"></label>
     <label>Meal Time:
-      <select id="parentMealTime" onchange="checkParentReady()">
+      <select id="tillMeal" onchange="checkTillReady()">
         <option value="">Select</option>
         <option value="Breakfast">Breakfast</option>
         <option value="Break">Break</option>
         <option value="Lunch">Lunch</option>
       </select>
     </label>
-    <label>Date: <input type="date" id="parentDate" onchange="checkParentReady()"></label>
-    <div id="parentItemsGrid"></div>
-    <div id="parentBasket">
+    <label>Date: <input type="date" id="tillDate" onchange="checkTillReady()"></label>
+    <button id="startTillBtn" onclick="startTill()" disabled>Start Transaction</button>
+
+    <div id="itemsGrid"></div>
+    <div id="basket">
       <h3>Basket</h3>
-      <ul id="parentBasketList"></ul>
-      <p>Total: £<span id="parentBasketTotal">0.00</span></p>
-      <button onclick="confirmParentPreorder()">Confirm Pre-Order</button>
+      <ul id="basketList"></ul>
+      <p>Total: £<span id="basketTotal">0.00</span></p>
+      <button onclick="checkout()">Checkout</button>
     </div>
   </div>
 
-  <!-- Settings Page -->
-  <div id="settings" class="page">
-    <h2>Settings</h2>
-    <label>Overdraft Limit (£): <input type="number" id="overdraftLimit"></label>
-    <label>Daily Cap (£): <input type="number" id="dailyCap"></label>
-    <label>Tax Rate (%): <input type="number" id="taxRate"></label>
-    <label>Receipt Printing: 
-      <select id="receiptPrinting">
-        <option value="enabled">Enabled</option>
-        <option value="disabled">Disabled</option>
+  <!-- Back Office -->
+  <div id="backoffice" class="page">
+    <h2>Back Office</h2>
+    <h3>Items</h3>
+    <button onclick="openItemPopup()">Add Item</button>
+    <button onclick="exportItems()">Export Items CSV</button>
+    <input type="file" id="importItemsFile" accept=".csv" onchange="importItems(event)">
+    <table id="itemsTable"><thead><tr><th>Code</th><th>Name</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody></tbody></table>
+
+    <h3>Students</h3>
+    <button onclick="openStudentPopup()">Add Student</button>
+    <button onclick="exportStudents()">Export Students CSV</button>
+    <input type="file" id="importStudentsFile" accept=".csv" onchange="importStudents(event)">
+    <table id="studentsTable"><thead><tr><th>Name</th><th>Type</th><th>Year</th><th>Balance</th><th>No School Food</th><th>Parent Approval</th><th>Actions</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <!-- Parent Preorder -->
+  <div id="parentPreorder" class="page">
+    <h2>Parent Pre-Order</h2>
+    <label>Student Name: <input type="text" id="preorderStudent" oninput="checkPreorderReady()"></label>
+    <label>Meal Time:
+      <select id="preorderMeal" onchange="checkPreorderReady()">
+        <option value="">Select</option>
+        <option value="Breakfast">Breakfast</option>
+        <option value="Break">Break</option>
+        <option value="Lunch">Lunch</option>
       </select>
     </label>
+    <label>Date: <input type="date" id="preorderDate" onchange="checkPreorderReady()"></label>
+    <div id="preorderItemsGrid"></div>
+    <div id="preorderBasket">
+      <h3>Basket</h3>
+      <ul id="preorderList"></ul>
+      <p>Total: £<span id="preorderTotal">0.00</span></p>
+      <button onclick="confirmPreorder()" disabled>Confirm Pre-Order</button>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div id="settings" class="page">
+    <h2>Settings</h2>
+    <label>Overdraft Limit: <input type="number" id="overdraftLimit"></label>
+    <label>Daily Cap: <input type="number" id="dailyCap"></label>
+    <label>Tax (%): <input type="number" id="taxRate"></label>
+    <label>Receipt: <select id="receiptOption"><option value="enabled">Enabled</option><option value="disabled">Disabled</option></select></label>
     <button onclick="saveSettings()">Save Settings</button>
   </div>
 </div>
 
-<!-- Generic Popup -->
+<!-- POPUP -->
 <div id="popup" class="popup hidden">
   <div class="popupContent" id="popupContent"></div>
 </div>
 
 <script>
-// ---------- Data & Persistence ----------
-let role=null, basket=[], parentBasket=[];
-let students=[], items=[], parentPreorders={}, settings={overdraft:-10,dailyCap:10,tax:0,receiptPrinting:"enabled"};
+// ---------------- DATA ----------------
+let role=null;
+let items=[], students=[], basket=[], preorderBasket=[];
+let settings={overdraft:-10,dailyCap:10,tax:0,receipt:"enabled"};
+let parentPreorders={};
+loadAll();
 
-function saveAll(){localStorage.setItem('students',JSON.stringify(students)); localStorage.setItem('items',JSON.stringify(items)); localStorage.setItem('settings',JSON.stringify(settings)); localStorage.setItem('parentPreorders',JSON.stringify(parentPreorders));}
-function loadAll(){students=JSON.parse(localStorage.getItem('students'))||[]; items=JSON.parse(localStorage.getItem('items'))||[]; settings=JSON.parse(localStorage.getItem('settings'))||settings; parentPreorders=JSON.parse(localStorage.getItem('parentPreorders'))||{};}
-
-// ---------- Login ----------
+// ---------------- LOGIN ----------------
 function login(){
   const u=document.getElementById("username").value.trim();
   const p=document.getElementById("password").value.trim();
@@ -161,18 +145,96 @@ function login(){
     role=u;
     document.getElementById("loginOverlay").style.display="none";
     document.getElementById("nav").classList.remove("hidden");
+    document.getElementById("backOfficeBtn").style.display=(role==="Admin"||role==="Manager")?"inline-block":"none";
+    document.getElementById("parentPreorderBtn").style.display=(role==="Admin"||role==="Manager")?"inline-block":"none";
     showPage('till');
-    renderItems(); renderBackOffice(); renderParentItems(); loadSettings();
-  } else document.getElementById("loginError").style.display="block";
+    renderItems(); renderTables(); renderPreorderItems();
+    loadSettings();
+  } else {document.getElementById("loginError").style.display="block";}
 }
+function logout(){location.reload();}
 
-// ---------- Page Switching ----------
+// ---------------- NAV ----------------
 function showPage(page){['till','backoffice','parentPreorder','settings'].forEach(p=>document.getElementById(p).classList.remove('active')); document.getElementById(page).classList.add('active');}
 
-// ---------- Core Functions Placeholder ----------
-// Here you would implement all: rendering items, back office tables, popups for add/edit, till basket logic, parent preorder logic, CSV/PDF export, admin overrides, cross-removal, localStorage saving, and validation.
+// ---------------- LOCAL STORAGE ----------------
+function saveAll(){localStorage.setItem('students',JSON.stringify(students)); localStorage.setItem('items',JSON.stringify(items)); localStorage.setItem('settings',JSON.stringify(settings)); localStorage.setItem('parentPreorders',JSON.stringify(parentPreorders));}
+function loadAll(){students=JSON.parse(localStorage.getItem('students'))||[]; items=JSON.parse(localStorage.getItem('items'))||[]; settings=JSON.parse(localStorage.getItem('settings'))||settings; parentPreorders=JSON.parse(localStorage.getItem('parentPreorders'))||{};}
 
-loadAll();
+// ---------------- ENABLE BUTTONS ----------------
+function checkTillReady(){document.getElementById("startTillBtn").disabled=!document.getElementById("tillStudent").value||!document.getElementById("tillMeal").value||!document.getElementById("tillDate").value;}
+function checkPreorderReady(){document.querySelector("#preorderBasket button").disabled=!document.getElementById("preorderStudent").value||!document.getElementById("preorderMeal").value||!document.getElementById("preorderDate").value;}
+
+// ---------------- RENDER ----------------
+function renderItems(){
+  const grid=document.getElementById("itemsGrid"); grid.innerHTML="";
+  items.forEach((i,index)=>{
+    const btn=document.createElement("div"); btn.className="itemBtn"; btn.textContent=i.name+"\n£"+i.price.toFixed(2);
+    const remove=document.createElement("button"); remove.className="removeBtn"; remove.textContent="×"; remove.onclick=(e)=>{e.stopPropagation(); basket.splice(index,1); updateBasket();};
+    btn.appendChild(remove);
+    btn.onclick=()=>{basket.push(i); updateBasket();};
+    grid.appendChild(btn);
+  });
+}
+function updateBasket(){const list=document.getElementById("basketList"); list.innerHTML=""; let total=0; basket.forEach(i=>{total+=i.price; const li=document.createElement("li"); li.textContent=i.name+" £"+i.price.toFixed(2); list.appendChild(li);}); total+=total*(settings.tax/100); document.getElementById("basketTotal").textContent=total.toFixed(2);}
+function renderTables(){
+  const it=document.querySelector("#itemsTable tbody"); it.innerHTML=""; items.forEach((i,index)=>{const tr=document.createElement("tr"); tr.innerHTML=`<td>${i.code}</td><td>${i.name}</td><td>${i.price.toFixed(2)}</td><td>${i.stock||0}</td><td><button onclick="editItem(${index})">Edit</button> <button onclick="deleteItem(${index})">Delete</button></td>`; it.appendChild(tr);});
+  const st=document.querySelector("#studentsTable tbody"); st.innerHTML=""; students.forEach((s,index)=>{const tr=document.createElement("tr"); tr.innerHTML=`<td>${s.name}</td><td>${s.type||'Student'}</td><td>${s.year||''}</td><td>${s.balance||0}</td><td>${s.noSchoolFood}</td><td>${s.parentApproval}</td><td><button onclick="editStudent(${index})">Edit</button> <button onclick="deleteStudent(${index})">Delete</button></td>`; st.appendChild(tr);});
+}
+function renderPreorderItems(){const grid=document.getElementById("preorderItemsGrid"); grid.innerHTML=""; items.forEach((i,index)=>{const btn=document.createElement("div"); btn.className="itemBtn"; btn.textContent=i.name+"\n£"+i.price.toFixed(2); btn.onclick=()=>{preorderBasket.push(i); updatePreorderBasket();}; grid.appendChild(btn);});}
+function updatePreorderBasket(){const list=document.getElementById("preorderList"); list.innerHTML=""; let total=0; preorderBasket.forEach(i=>{total+=i.price; const li=document.createElement("li"); li.textContent=i.name+" £"+i.price.toFixed(2); list.appendChild(li);}); document.getElementById("preorderTotal").textContent=total.toFixed(2);}
+
+// ---------------- SETTINGS ----------------
+function saveSettings(){settings.overdraft=parseFloat(document.getElementById("overdraftLimit").value)||settings.overdraft; settings.dailyCap=parseFloat(document.getElementById("dailyCap").value)||settings.dailyCap; settings.tax=parseFloat(document.getElementById("taxRate").value)||0; settings.receipt=document.getElementById("receiptOption").value; saveAll(); alert("Settings saved.");}
+function loadSettings(){document.getElementById("overdraftLimit").value=settings.overdraft; document.getElementById("dailyCap").value=settings.dailyCap; document.getElementById("taxRate").value=settings.tax; document.getElementById("receiptOption").value=settings.receipt;}
+
+// ---------------- POPUP ----------------
+function showPopup(content){document.getElementById("popupContent").innerHTML=content+'<br><button onclick="closePopup()">Close</button>'; document.getElementById("popup").classList.remove("hidden");}
+function closePopup(){document.getElementById("popup").classList.add("hidden");}
+
+// ---------------- ADD/EDIT/DELETE ----------------
+function openItemPopup(){showPopup(`<h3>Add Item</h3>
+<label>Name: <input type="text" id="newItemName"></label>
+<label>Price: <input type="number" id="newItemPrice" step="0.01"></label>
+<label>Stock: <input type="number" id="newItemStock" step="1"></label>
+<button onclick="addItem()">Save</button>`);}
+function addItem(){const name=document.getElementById("newItemName").value; const price=parseFloat(document.getElementById("newItemPrice").value); const stock=parseInt(document.getElementById("newItemStock").value)||0; const code=Math.floor(Math.random()*1000000).toString().padStart(6,'0'); items.push({code,name,price,stock}); saveAll(); renderItems(); renderTables(); closePopup();}
+function deleteItem(i){items.splice(i,1); saveAll(); renderItems(); renderTables();}
+function editItem(i){const item=items[i]; showPopup(`<h3>Edit Item</h3>
+<label>Name: <input type="text" id="editItemName" value="${item.name}"></label>
+<label>Price: <input type="number" id="editItemPrice" step="0.01" value="${item.price}"></label>
+<label>Stock: <input type="number" id="editItemStock" step="1" value="${item.stock||0}"></label>
+<button onclick="saveEditItem(${i})">Save</button>`);}
+function saveEditItem(i){items[i].name=document.getElementById("editItemName").value; items[i].price=parseFloat(document.getElementById("editItemPrice").value); items[i].stock=parseInt(document.getElementById("editItemStock").value)||0; saveAll(); renderItems(); renderTables(); closePopup();}
+
+// ---------------- STUDENTS ----------------
+function openStudentPopup(){showPopup(`<h3>Add Student</h3>
+<label>Name: <input type="text" id="newStudentName"></label>
+<label>Type: <select id="newStudentType"><option value="Student">Student</option><option value="Guest">Guest</option><option value="Staff">Staff</option></select></label>
+<label>Year: <input type="text" id="newStudentYear"></label>
+<label>Balance: <input type="number" id="newStudentBalance"></label>
+<label>No School Food: <select id="newStudentNoFood"><option value="false">False</option><option value="true">True</option></select></label>
+<label>Parent Approval: <select id="newStudentParentApproval"><option value="false">False</option><option value="true">True</option></select></label>
+<button onclick="addStudent()">Save</button>`);}
+function addStudent(){const name=document.getElementById("newStudentName").value; const type=document.getElementById("newStudentType").value; const year=document.getElementById("newStudentYear").value; const balance=parseFloat(document.getElementById("newStudentBalance").value)||0; const noSchoolFood=document.getElementById("newStudentNoFood").value==="true"; const parentApproval=document.getElementById("newStudentParentApproval").value==="true"; students.push({name,type,year,balance,noSchoolFood,parentApproval}); saveAll(); renderTables(); closePopup();}
+function editStudent(i){const s=students[i]; showPopup(`<h3>Edit Student</h3>
+<label>Name: <input type="text" id="editStudentName" value="${s.name}"></label>
+<label>Type: <select id="editStudentType"><option value="Student">Student</option><option value="Guest">Guest</option><option value="Staff">Staff</option></select></label>
+<label>Year: <input type="text" id="editStudentYear" value="${s.year}"></label>
+<label>Balance: <input type="number" id="editStudentBalance" value="${s.balance}"></label>
+<label>No School Food: <select id="editStudentNoFood"><option value="false">False</option><option value="true">True</option></select></label>
+<label>Parent Approval: <select id="editStudentParentApproval"><option value="false">False</option><option value="true">True</option></select></label>
+<button onclick="saveEditStudent(${i})">Save</button>`);}
+function saveEditStudent(i){students[i].name=document.getElementById("editStudentName").value; students[i].type=document.getElementById("editStudentType").value; students[i].year=document.getElementById("editStudentYear").value; students[i].balance=parseFloat(document.getElementById("editStudentBalance").value)||0; students[i].noSchoolFood=document.getElementById("editStudentNoFood").value==="true"; students[i].parentApproval=document.getElementById("editStudentParentApproval").value==="true"; saveAll(); renderTables(); closePopup();}
+function deleteStudent(i){students.splice(i,1); saveAll(); renderTables();}
+
+// ---------------- IMPORT/EXPORT ----------------
+function exportItems(){const csv='Code,Name,Price,Stock\n'+items.map(i=>`${i.code},${i.name},${i.price},${i.stock||0}`).join('\n'); downloadCSV(csv,'items.csv');}
+function exportStudents(){const csv='Name,Type,Year,Balance,NoSchoolFood,ParentApproval\n'+students.map(s=>`${s.name},${s.type},${s.year},${s.balance},${s.noSchoolFood},${s.parentApproval}`).join('\n'); downloadCSV(csv,'students.csv');}
+function downloadCSV(data,filename){const blob=new Blob([data],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);}
+function importItems(e){const file=e.target.files[0]; const reader=new FileReader(); reader.onload=function(ev){const lines=ev.target.result.split('\n').slice(1); lines.forEach(l=>{const [code,name,price,stock]=l.split(','); if(name){items.push({code,name,price:parseFloat(price),stock:parseInt(stock)||0});}}); saveAll(); renderItems(); renderTables();}; reader.readAsText(file);}
+function importStudents(e){const file=e.target.files[0]; const reader=new FileReader(); reader.onload=function(ev){const lines=ev.target.result.split('\n').slice(1); lines.forEach(l=>{const [name,type,year,balance,noFood,parentApproval]=l.split(','); if(name){students.push({name,type,year,balance:parseFloat(balance)||0,noSchoolFood:noFood==='true',parentApproval:parentApproval==='true'});}}); saveAll(); renderTables();}; reader.readAsText(file);}
 </script>
+
 </body>
 </html>
