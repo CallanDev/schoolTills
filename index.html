@@ -5,13 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>School Till System</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 body { font-family:'Roboto',sans-serif; margin:0; padding:0; background:#f0f2f5; }
 header { background:#1e1e2f; color:#fff; padding:15px; text-align:center; font-size:1.5em; }
-#loginOverlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:999; }
-#loginBox { background:#fff; padding:30px; border-radius:10px; width:350px; text-align:center; box-shadow:0 0 20px rgba(0,0,0,0.3); }
-#loginBox input, select { width:80%; padding:10px; margin:10px 0; border-radius:5px; border:1px solid #ccc; }
-#loginBox button { padding:10px 20px; border:none; border-radius:5px; background:#1e1e2f; color:#fff; cursor:pointer; font-weight:700; }
+#loginOverlay, .popup { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:999; }
+#loginBox, .popupContent { background:#fff; padding:30px; border-radius:10px; width:400px; max-height:80%; overflow-y:auto; text-align:center; box-shadow:0 0 20px rgba(0,0,0,0.3); }
+#loginBox input, #loginBox button, .popupContent input, .popupContent select, .popupContent button { width:80%; padding:10px; margin:10px 0; border-radius:5px; border:1px solid #ccc; }
+#loginBox button, .popupContent button { width:auto; background:#1e1e2f; color:#fff; border:none; cursor:pointer; font-weight:700; }
 .hidden { display:none; }
 #nav { background:#2b2b45; padding:10px; display:flex; gap:10px; }
 #nav button { padding:10px 15px; border:none; border-radius:5px; cursor:pointer; background:#4b4b7b; color:#fff; font-weight:600; }
@@ -19,15 +20,13 @@ header { background:#1e1e2f; color:#fff; padding:15px; text-align:center; font-s
 .page { display:none; }
 .active { display:block; }
 #itemsGrid, #backofficeItemsGrid, #parentItemsGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:15px; }
-.itemBtn { padding:20px; background:#fff; border:none; border-radius:10px; cursor:pointer; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center; transition:0.2s; }
+.itemBtn { padding:20px; background:#fff; border:none; border-radius:10px; cursor:pointer; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center; transition:0.2s; position:relative; }
 .itemBtn:hover { transform:scale(1.05); background:#e3e3e3; }
+.removeBtn { position:absolute; top:5px; right:5px; background:red; color:#fff; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; }
 #basket { margin-top:20px; background:#fff; padding:15px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
 #basket h3 { margin-top:0; }
-.popup { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:1000; }
-.popupContent { background:#fff; padding:20px; border-radius:10px; width:500px; max-height:80%; overflow-y:auto; box-shadow:0 5px 15px rgba(0,0,0,0.3); text-align:center; }
 .studentEntry, .alert { padding:10px; margin:5px 0; cursor:pointer; border-radius:5px; }
 .studentEntry:hover { background:#f0f0f0; }
-.alert { background:#ffefef; color:#b00; }
 table { width:100%; border-collapse:collapse; margin-top:10px; }
 table, th, td { border:1px solid #ccc; }
 th, td { padding:8px; text-align:left; }
@@ -38,272 +37,254 @@ th { background:#4b4b7b; color:#fff; }
 <body>
 <header>School Till System</header>
 
+<!-- Login Overlay -->
 <div id="loginOverlay">
   <div id="loginBox">
     <h2>Login</h2>
-    <input type="text" id="username" placeholder="Username"><br>
-    <input type="password" id="password" placeholder="Password"><br>
-    <button id="loginBtn">Login</button>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
     <p id="loginError" style="color:red; display:none;">Invalid credentials</p>
   </div>
 </div>
 
+<!-- Navigation -->
 <div id="nav" class="hidden">
-  <button onclick="showPage('tillPage')">Till</button>
-  <button onclick="showPage('backofficePage')">Back Office</button>
-  <button onclick="showPage('settingsPage')">Settings</button>
-  <button onclick="showPage('parentPage')">Parent Pre-Order</button>
-  <button onclick="logout()">Logout</button>
+  <button onclick="showPage('till')">Till</button>
+  <button onclick="showPage('backoffice')">Back Office</button>
+  <button onclick="showPage('parentPreorder')">Parent Pre-Order</button>
+  <button onclick="showPage('settings')">Settings</button>
 </div>
 
+<!-- Main Pages -->
 <div id="main">
-  <!-- Till -->
-  <div id="tillPage" class="page">
+  <!-- Till Page -->
+  <div id="till" class="page">
     <h2>Till</h2>
-    <label>Meal Time:
-      <select id="mealTime">
-        <option value="breakfast">Breakfast</option>
-        <option value="break">Break</option>
-        <option value="lunch">Lunch</option>
-      </select>
-    </label>
-    <div id="selectedStudentInfo"></div>
-    <button onclick="startCheckout()">Select/Add Student</button>
+    <div>
+      <label>Student Name: <input type="text" id="tillStudentName" oninput="checkTillReady()"></label>
+      <label>Meal Time: 
+        <select id="tillMealTime" onchange="checkTillReady()">
+          <option value="">Select</option>
+          <option value="Breakfast">Breakfast</option>
+          <option value="Break">Break</option>
+          <option value="Lunch">Lunch</option>
+        </select>
+      </label>
+      <label>Date: <input type="date" id="tillDate" onchange="checkTillReady()"></label>
+      <button onclick="startTillTransaction()">Start Transaction</button>
+    </div>
     <div id="itemsGrid"></div>
     <div id="basket">
       <h3>Basket</h3>
       <ul id="basketList"></ul>
       <p>Total: £<span id="basketTotal">0.00</span></p>
-      <button onclick="confirmTransaction()">Confirm Transaction</button>
+      <button onclick="checkoutTill()">Checkout</button>
     </div>
   </div>
 
-  <!-- Back Office -->
-  <div id="backofficePage" class="page">
-    <h2>Back Office Management</h2>
-    <h3>Menu Items (Drag to reorder & Edit)</h3>
-    <div id="backofficeItemsGrid"></div>
-    <input type="text" id="newItemName" placeholder="Item Name">
-    <input type="number" id="newItemPrice" placeholder="Price">
-    <input type="text" id="newItemBarcode" placeholder="Barcode">
-    <input type="number" id="newItemStock" placeholder="Stock">
-    <button onclick="addBackOfficeItem()">Add Item</button>
-    <button onclick="exportItemsCSV()">Export Items CSV</button>
-    <button onclick="importItemsCSV()">Import Items CSV</button>
-    <button onclick="downloadItemsTemplate()">Download CSV Template</button>
-
-    <h3>Profiles (Students, Guests, Staff)</h3>
-    <table>
-      <thead>
-        <tr><th>Name</th><th>Type</th><th>Year</th><th>Balance</th><th>No School Food</th><th>Parent Approval</th><th>Allergies</th><th>Actions</th></tr>
-      </thead>
-      <tbody id="profilesTable"></tbody>
-    </table>
-    <button onclick="addStudentManual()">Add Student</button>
+  <!-- Back Office Page -->
+  <div id="backoffice" class="page">
+    <h2>Back Office</h2>
+    <button onclick="openBackOffice()">Manage Items & Students</button>
   </div>
 
-  <!-- Settings -->
-  <div id="settingsPage" class="page">
-    <h2>Settings</h2>
-    <label>Overdraft Limit (£):<input type="number" id="overdraftLimit"></label><br>
-    <label>Tax Rate (%):<input type="number" id="taxRate"></label><br>
-    <label>Daily Spending Cap (£):<input type="number" id="dailyCap"></label><br>
-    <label>Receipt Printing:<select id="receiptPrinting">
-      <option>Enabled</option><option>Disabled</option></select></label><br>
-    <button onclick="saveSettings()">Save Settings</button>
-  </div>
-
-  <!-- Parent Pre-Order -->
-  <div id="parentPage" class="page">
+  <!-- Parent Pre-Order Page -->
+  <div id="parentPreorder" class="page">
     <h2>Parent Pre-Order</h2>
-    <label>Full Student Name: <input type="text" id="parentStudentName"></label>
+    <label>Student Name: <input type="text" id="parentStudentName" oninput="checkParentReady()"></label>
     <label>Meal Time:
-      <select id="parentMealTime">
-        <option value="breakfast">Breakfast</option>
-        <option value="break">Break</option>
-        <option value="lunch">Lunch</option>
+      <select id="parentMealTime" onchange="checkParentReady()">
+        <option value="">Select</option>
+        <option value="Breakfast">Breakfast</option>
+        <option value="Break">Break</option>
+        <option value="Lunch">Lunch</option>
       </select>
     </label>
+    <label>Date: <input type="date" id="parentDate" onchange="checkParentReady()"></label>
     <div id="parentItemsGrid"></div>
     <div id="parentBasket">
-      <h3>Pre-Order Basket</h3>
+      <h3>Basket</h3>
       <ul id="parentBasketList"></ul>
       <p>Total: £<span id="parentBasketTotal">0.00</span></p>
       <button onclick="confirmParentPreorder()">Confirm Pre-Order</button>
     </div>
   </div>
+
+  <!-- Settings Page -->
+  <div id="settings" class="page">
+    <h2>Settings</h2>
+    <label>Overdraft Limit (£): <input type="number" id="overdraftLimit"></label>
+    <label>Daily Cap (£): <input type="number" id="dailyCap"></label>
+    <label>Tax Rate (%): <input type="number" id="taxRate"></label>
+    <label>Receipt Printing: 
+      <select id="receiptPrinting">
+        <option value="enabled">Enabled</option>
+        <option value="disabled">Disabled</option>
+      </select>
+    </label>
+    <button onclick="saveSettings()">Save Settings</button>
+  </div>
+</div>
+
+<!-- Popups -->
+<div id="popup" class="popup hidden">
+  <div class="popupContent" id="popupContent"></div>
 </div>
 
 <script>
-/******** Data Initialization ********/
-let role=null;
-let students=JSON.parse(localStorage.getItem('students'))||[];
-let items=JSON.parse(localStorage.getItem('items'))||[];
-let basket=[], selectedStudent=null;
-let parentBasket=[], parentPreorders=JSON.parse(localStorage.getItem('parentPreorders'))||{};
-let settings=JSON.parse(localStorage.getItem('settings'))||{overdraft:-10,tax:0,dailyCap:10,receiptPrinting:"Enabled"};
+// ---------- Data ----------
+let role=null, basket=[], parentBasket=[], students=[], items=[], parentPreorders={}, settings={overdraft:-10,dailyCap:10,tax:0,receiptPrinting:"enabled"};
 
-/******** Login ********/
-document.getElementById('loginBtn').addEventListener('click',()=>{
-  const u=document.getElementById('username').value.trim();
-  const p=document.getElementById('password').value.trim();
-  if((u==="Cashier"||u==="Admin"||u==="Manager")&&p==="Mabelcat1CC!!"){
-    role=u; document.getElementById('loginOverlay').style.display="none"; document.getElementById('nav').classList.remove('hidden');
-    showPage('tillPage'); renderTillItems(); renderBackOfficeItems(); renderProfiles(); renderParentItems();
-  } else document.getElementById('loginError').style.display="block";
-});
-function logout(){location.reload();}
-function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active');}
-
-/******** Till Functions ********/
-function renderTillItems(){
-  const grid=document.getElementById('itemsGrid'); grid.innerHTML="";
-  items.forEach((item,i)=>{
-    const btn=document.createElement('button'); btn.className='itemBtn';
-    btn.textContent=`${item.name}\n£${item.price}\nStock:${item.stock}`;
-    btn.onclick=()=>{
-      if(!selectedStudent){alert("Enter student first."); return;}
-      if(parentPreorders[selectedStudent.name]&&parentPreorders[selectedStudent.name][document.getElementById('mealTime').value]){
-        alert("Cannot add: Pre-order exists."); return;
-      }
-      basket.push(item); updateBasket();
-    };
-    grid.appendChild(btn);
-  });
-}
-function updateBasket(){
-  const list=document.getElementById('basketList'); list.innerHTML=""; let total=0;
-  basket.forEach(i=>{total+=i.price; const li=document.createElement('li'); li.textContent=`${i.name} £${i.price.toFixed(2)}`; list.appendChild(li);});
-  if(settings.tax>0) total+=total*(settings.tax/100);
-  document.getElementById('basketTotal').textContent=total.toFixed(2);
-}
-function startCheckout(){
-  const name=prompt("Enter full student name:").trim(); if(!name) return;
-  selectedStudent=students.find(s=>s.name.toLowerCase()===name.toLowerCase());
-  if(!selectedStudent){alert("Student not found!"); return;}
-  document.getElementById('selectedStudentInfo').innerHTML=`Name: ${selectedStudent.name} | Allergies: ${selectedStudent.allergies} | Balance: £${selectedStudent.balance.toFixed(2)}`;
-  if(selectedStudent.noSchoolFood){
-    const popup=document.createElement('div'); popup.className='popup'; popup.style.display='flex';
-    const inner=document.createElement('div'); inner.className='popupContent';
-    inner.innerHTML=`<p>NO SCHOOL FOOD - Admin authorization required</p><input type="password" id="authPass" placeholder="Admin Password"><br><button onclick="authorizeNoFood()">Authorize</button>`;
-    popup.appendChild(inner); document.body.appendChild(popup);
-  }
-  const meal=document.getElementById('mealTime').value;
-  if(parentPreorders[selectedStudent.name]&&parentPreorders[selectedStudent.name][meal]){
-    alert("Student has pre-ordered: "+parentPreorders[selectedStudent.name][meal].map(i=>i.name).join(", "));
-    basket=[...parentPreorders[selectedStudent.name][meal]]; updateBasket();
-  }
-}
-function authorizeNoFood(){const p=document.getElementById('authPass').value; if(p==="Mabelcat1CC!!"){alert("Authorized!"); selectedStudent.noSchoolFood=false; document.querySelectorAll('.popup').forEach(e=>e.remove());} else alert("Wrong password.");}
-function confirmTransaction(){
-  if(!selectedStudent){alert("Select student first."); return;}
-  const total=basket.reduce((a,i)=>a+i.price,0);
-  if(selectedStudent.balance-total<settings.overdraft){alert("Exceeds overdraft."); return;}
-  selectedStudent.balance-=total;
-  alert(`Transaction complete for ${selectedStudent.name}. New balance: £${selectedStudent.balance.toFixed(2)}`);
-  basket=[]; updateBasket(); selectedStudent=null; document.getElementById('selectedStudentInfo').innerHTML=""; saveAll(); renderTillItems(); renderProfiles();
-}
-
-/******** Back Office ********/
-function renderBackOfficeItems(){
-  const grid=document.getElementById('backofficeItemsGrid'); grid.innerHTML="";
-  items.forEach((item,i)=>{
-    const div=document.createElement('div'); div.className='itemBtn draggable'; div.draggable=true;
-    div.textContent=`${item.name}\n£${item.price}\nStock:${item.stock}`;
-    div.ondblclick=()=>{ const n=prompt("Edit Name",item.name); const p=prompt("Edit Price",item.price); const s=prompt("Edit Stock",item.stock); if(n) item.name=n; if(p) item.price=parseFloat(p); if(s) item.stock=parseInt(s); saveAll(); renderBackOfficeItems(); renderTillItems(); renderParentItems(); };
-    grid.appendChild(div);
-  });
-}
-function addBackOfficeItem(){
-  const name=document.getElementById('newItemName').value.trim();
-  const price=parseFloat(document.getElementById('newItemPrice').value);
-  const barcode=document.getElementById('newItemBarcode').value.trim();
-  const stock=parseInt(document.getElementById('newItemStock').value);
-  if(!name||isNaN(price)||!barcode||isNaN(stock)){alert("Fill all fields"); return;}
-  items.push({name,price,barcode,stock}); saveAll(); renderBackOfficeItems(); renderTillItems(); renderParentItems();
-}
-function renderProfiles(){
-  const tbody=document.getElementById('profilesTable'); tbody.innerHTML="";
-  students.forEach((s,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${s.name}</td><td>${s.type||"Student"}</td><td>${s.year||""}</td><td>£${s.balance.toFixed(2)}</td>
-    <td>${s.noSchoolFood?"Yes":"No"}</td><td>${s.parentApproval?"Yes":"No"}</td><td>${s.allergies||""}</td>
-    <td><button onclick="editStudent(${i})">Edit</button><button onclick="deleteStudent(${i})">Delete</button></td>`;
-    tbody.appendChild(tr);
-  });
-}
-function addStudentManual(){
-  const name=prompt("Name:"); if(!name) return;
-  const type=prompt("Type (Student/Staff/Guest):"); const year=prompt("Year/S1-S6:"); const balance=parseFloat(prompt("Balance:"))||0;
-  const noSchoolFood=confirm("No School Food?"); const parentApproval=confirm("Parent Approval Required?"); const allergies=prompt("Allergies:");
-  students.push({name,type,year,balance,noSchoolFood,parentApproval,allergies}); saveAll(); renderProfiles();
-}
-function editStudent(i){ const s=students[i]; const name=prompt("Edit Name",s.name); if(name)s.name=name; const balance=parseFloat(prompt("Balance",s.balance)); if(!isNaN(balance)) s.balance=balance; saveAll(); renderProfiles();}
-function deleteStudent(i){if(confirm("Delete?")){students.splice(i,1); saveAll(); renderProfiles();}}
-
-/******** Parent Pre-Order ********/
-function renderParentItems(){
-  const grid=document.getElementById('parentItemsGrid'); grid.innerHTML="";
-  items.forEach(item=>{
-    const btn=document.createElement('button'); btn.className='itemBtn';
-    btn.textContent=`${item.name}\n£${item.price}`;
-    btn.onclick=()=>{
-      const name=document.getElementById('parentStudentName').value.trim();
-      if(!name){alert("Enter full student name"); return;}
-      parentBasket.push(item); updateParentBasket();
-    };
-    grid.appendChild(btn);
-  });
-}
-function updateParentBasket(){
-  const list=document.getElementById('parentBasketList'); list.innerHTML=""; let total=0;
-  parentBasket.forEach(i=>{total+=i.price; const li=document.createElement('li'); li.textContent=`${i.name} £${i.price.toFixed(2)}`; list.appendChild(li);});
-  document.getElementById('parentBasketTotal').textContent=total.toFixed(2);
-}
-function confirmParentPreorder(){
-  const name=document.getElementById('parentStudentName').value.trim();
-  if(!name){alert("Enter student name"); return;}
-  const meal=document.getElementById('parentMealTime').value;
-  if(!parentPreorders[name]) parentPreorders[name]={};
-  parentPreorders[name][meal]=[...parentBasket]; parentBasket=[]; updateParentBasket(); saveAll(); alert("Pre-Order saved!");
-}
-
-/******** CSV Import/Export ********/
-function exportItemsCSV(){
-  let csv="Name,Price,Barcode,Stock\n";
-  items.forEach(i=>{csv+=`${i.name},${i.price},${i.barcode},${i.stock}\n`;});
-  const blob=new Blob([csv],{type:'text/csv'}); const link=document.createElement('a');
-  link.href=URL.createObjectURL(blob); link.download="items.csv"; link.click();
-}
-function importItemsCSV(){
-  const fileInput=document.createElement('input'); fileInput.type='file'; fileInput.accept='.csv';
-  fileInput.onchange=e=>{
-    const file=e.target.files[0]; const reader=new FileReader();
-    reader.onload=function(ev){ const text=ev.target.result; const lines=text.split("\n").slice(1); lines.forEach(l=>{const [name,price,barcode,stock]=l.split(","); if(name) items.push({name,price:parseFloat(price),barcode,stock:parseInt(stock)});}); saveAll(); renderBackOfficeItems(); renderTillItems(); renderParentItems();};
-    reader.readAsText(file);
-  }; fileInput.click();
-}
-function downloadItemsTemplate(){
-  const csv="Name,Price,Barcode,Stock\n"; const blob=new Blob([csv],{type:'text/csv'}); const link=document.createElement('a');
-  link.href=URL.createObjectURL(blob); link.download="items_template.csv"; link.click();
-}
-
-/******** Settings ********/
-function saveSettings(){
-  settings.overdraft=parseFloat(document.getElementById('overdraftLimit').value)||settings.overdraft;
-  settings.tax=parseFloat(document.getElementById('taxRate').value)||settings.tax;
-  settings.dailyCap=parseFloat(document.getElementById('dailyCap').value)||settings.dailyCap;
-  settings.receiptPrinting=document.getElementById('receiptPrinting').value;
-  saveAll(); alert("Settings saved!");
-}
-
-/******** LocalStorage ********/
+// ---------- Utility ----------
 function saveAll(){
   localStorage.setItem('students',JSON.stringify(students));
   localStorage.setItem('items',JSON.stringify(items));
   localStorage.setItem('settings',JSON.stringify(settings));
   localStorage.setItem('parentPreorders',JSON.stringify(parentPreorders));
 }
+function loadAll(){
+  students=JSON.parse(localStorage.getItem('students'))||[];
+  items=JSON.parse(localStorage.getItem('items'))||[];
+  settings=JSON.parse(localStorage.getItem('settings'))||settings;
+  parentPreorders=JSON.parse(localStorage.getItem('parentPreorders'))||{};
+}
+
+// ---------- Login ----------
+function login(){
+  const u=document.getElementById("username").value.trim();
+  const p=document.getElementById("password").value.trim();
+  if((u==="Cashier"||u==="Admin"||u==="Manager") && p==="Mabelcat1CC!!"){
+    role=u; document.getElementById("loginOverlay").style.display="none";
+    document.getElementById("nav").classList.remove("hidden");
+    showPage('till'); renderTillItems(); renderParentItems();
+    document.getElementById("overdraftLimit").value=settings.overdraft;
+    document.getElementById("dailyCap").value=settings.dailyCap;
+    document.getElementById("taxRate").value=settings.tax;
+    document.getElementById("receiptPrinting").value=settings.receiptPrinting;
+  } else document.getElementById("loginError").style.display="block";
+}
+
+// ---------- Navigation ----------
+function showPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(page).classList.add('active');}
+
+// ---------- Till ----------
+function checkTillReady(){
+  const name=document.getElementById('tillStudentName').value.trim();
+  const meal=document.getElementById('tillMealTime').value;
+  const date=document.getElementById('tillDate').value;
+  document.querySelectorAll('#itemsGrid .itemBtn').forEach(btn=>btn.disabled=!(name && meal && date));
+}
+function startTillTransaction(){
+  const name=document.getElementById('tillStudentName').value.trim();
+  const meal=document.getElementById('tillMealTime').value;
+  const date=document.getElementById('tillDate').value;
+  const student=students.find(s=>s.name.toLowerCase()===name.toLowerCase());
+  if(!student){alert("Student not found"); return;}
+  if(parentPreorders[name] && parentPreorders[name][meal]) alert("Pre-ordered. Cannot add items.");  
+  updateBasketDisplay();
+}
+function renderTillItems(){
+  const grid=document.getElementById('itemsGrid'); grid.innerHTML="";
+  items.forEach((item,i)=>{
+    const btn=document.createElement('button'); btn.className='itemBtn'; btn.textContent=`${item.name}\n£${item.price}`;
+    btn.onclick=()=>{basket.push(item); updateBasketDisplay();};
+    grid.appendChild(btn);
+  });
+}
+function updateBasketDisplay(){
+  const list=document.getElementById('basketList'); list.innerHTML=""; let total=0;
+  basket.forEach((item,i)=>{
+    total+=item.price;
+    const li=document.createElement('li'); li.textContent=`${item.name} £${item.price.toFixed(2)}`;
+    const removeBtn=document.createElement('button'); removeBtn.className="removeBtn"; removeBtn.textContent="x";
+    removeBtn.onclick=()=>{basket.splice(i,1); updateBasketDisplay();};
+    li.appendChild(removeBtn);
+    list.appendChild(li);
+  });
+  document.getElementById('basketTotal').textContent=total.toFixed(2);
+}
+function checkoutTill(){
+  const name=document.getElementById('tillStudentName').value.trim();
+  const meal=document.getElementById('tillMealTime').value;
+  const date=document.getElementById('tillDate').value;
+  const student=students.find(s=>s.name.toLowerCase()===name.toLowerCase());
+  if(!student) return;
+  let total=basket.reduce((a,i)=>a+i.price,0);
+  total+=total*(settings.tax/100);
+  if(student.noSchoolFood && role==="Cashier"){
+    showPopup(`<h3>No School Food Authorization</h3>
+    <input type="text" id="authUser" placeholder="Admin/Manager Username">
+    <input type="password" id="authPass" placeholder="Password">
+    <button onclick="authorizeNoSchool('${name}',${total})">Authorize</button>`); return;
+  }
+  if(student.balance-total<settings.overdraft){alert("Exceeds overdraft"); return;}
+  student.balance-=total; basket=[]; updateBasketDisplay(); alert(`Transaction complete. New balance: £${student.balance.toFixed(2)}`); saveAll();
+}
+function authorizeNoSchool(name,total){
+  const u=document.getElementById('authUser').value.trim();
+  const p=document.getElementById('authPass').value.trim();
+  if((u==="Admin"||u==="Manager") && p==="Mabelcat1CC!!"){
+    const student=students.find(s=>s.name===name);
+    student.balance-=total; basket=[]; updateBasketDisplay(); alert(`Authorized. Transaction complete. New balance: £${student.balance.toFixed(2)}`); saveAll(); closePopup();
+  } else alert("Invalid credentials");
+}
+
+// ---------- Parent Pre-Order ----------
+function checkParentReady(){
+  const name=document.getElementById('parentStudentName').value.trim();
+  const meal=document.getElementById('parentMealTime').value;
+  const date=document.getElementById('parentDate').value;
+  document.querySelectorAll('#parentItemsGrid .itemBtn').forEach(btn=>btn.disabled=!(name && meal && date));
+}
+function renderParentItems(){
+  const grid=document.getElementById('parentItemsGrid'); grid.innerHTML="";
+  items.forEach(item=>{
+    const btn=document.createElement('button'); btn.className='itemBtn'; btn.textContent=`${item.name}\n£${item.price}`;
+    btn.onclick=()=>{
+      const name=document.getElementById('parentStudentName').value.trim();
+      if(!name) return;
+      parentBasket.push(item); updateParentBasketDisplay();
+    };
+    grid.appendChild(btn);
+  });
+}
+function updateParentBasketDisplay(){
+  const list=document.getElementById('parentBasketList'); list.innerHTML=""; let total=0;
+  parentBasket.forEach((item,i)=>{
+    total+=item.price;
+    const li=document.createElement('li'); li.textContent=`${item.name} £${item.price.toFixed(2)}`;
+    const removeBtn=document.createElement('button'); removeBtn.className="removeBtn"; removeBtn.textContent="x";
+    removeBtn.onclick=()=>{parentBasket.splice(i,1); updateParentBasketDisplay();};
+    li.appendChild(removeBtn);
+    list.appendChild(li);
+  });
+  document.getElementById('parentBasketTotal').textContent=total.toFixed(2);
+}
+function confirmParentPreorder(){
+  const name=document.getElementById('parentStudentName').value.trim();
+  const meal=document.getElementById('parentMealTime').value;
+  const date=document.getElementById('parentDate').value;
+  if(!name || !meal || !date){alert("Fill all fields"); return;}
+  if(!parentPreorders[name]) parentPreorders[name]={};
+  parentPreorders[name][meal]=[...parentBasket]; parentBasket=[]; updateParentBasketDisplay(); saveAll(); alert("Pre-order saved!");
+}
+
+// ---------- Back Office & Settings ----------
+function saveSettings(){
+  settings.overdraft=parseFloat(document.getElementById('overdraftLimit').value)||settings.overdraft;
+  settings.dailyCap=parseFloat(document.getElementById('dailyCap').value)||settings.dailyCap;
+  settings.tax=parseFloat(document.getElementById('taxRate').value)||settings.tax;
+  settings.receiptPrinting=document.getElementById('receiptPrinting').value;
+  saveAll(); alert("Settings saved!");
+}
+
+// ---------- Popup ----------
+function showPopup(html){document.getElementById('popupContent').innerHTML=html; document.getElementById('popup').classList.remove('hidden');}
+function closePopup(){document.getElementById('popup').classList.add('hidden');}
+
+// ---------- Initialize ----------
+loadAll();
 </script>
 </body>
 </html>
