@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,7 +23,7 @@ header { background:#1e1e2f; color:#fff; padding:15px; text-align:center; font-s
 .itemBtn:hover { transform:scale(1.05); background:#e3e3e3; }
 #basket { margin-top:20px; background:#fff; padding:15px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
 #basket h3 { margin-top:0; }
-.popup { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; }
+.popup { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:1000; }
 .popupContent { background:#fff; padding:20px; border-radius:10px; width:700px; max-height:80%; overflow-y:auto; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
 .studentEntry, .alert { padding:10px; margin:5px 0; cursor:pointer; border-radius:5px; }
 .studentEntry:hover { background:#f0f0f0; }
@@ -50,15 +49,14 @@ th { background:#4b4b7b; color:#fff; }
 </div>
 
 <div id="nav" class="hidden">
-  <button onclick="showPage('till')">Till</button>
-  <button onclick="showPage('backoffice')">Back Office</button>
-  <button onclick="showPage('settings')">Settings</button>
-  <button onclick="showPage('parent')">Parent Pre-Order</button>
+  <button onclick="showPage('tillPage')">Till</button>
+  <button onclick="showPage('backofficePage')">Back Office</button>
+  <button onclick="showPage('settingsPage')">Settings</button>
+  <button onclick="showPage('parentPage')">Parent Pre-Order</button>
   <button onclick="logout()">Logout</button>
 </div>
 
 <div id="main">
-  <!-- Till Page -->
   <div id="tillPage" class="page">
     <h2>Till</h2>
     <div id="itemsGrid"></div>
@@ -70,7 +68,6 @@ th { background:#4b4b7b; color:#fff; }
     </div>
   </div>
 
-  <!-- Back Office Page -->
   <div id="backofficePage" class="page">
     <h2>Back Office Management</h2>
     <h3>Menu Items (Drag to reorder)</h3>
@@ -89,14 +86,13 @@ th { background:#4b4b7b; color:#fff; }
     <input type="number" id="newStudentBalance" placeholder="Balance">
     <label><input type="checkbox" id="newStudentNoFood">No School Food</label>
     <label><input type="checkbox" id="newStudentParent">Parent Approval</label>
-    <label><input type="text" id="newStudentAllergies" placeholder="Allergies"></label>
+    <input type="text" id="newStudentAllergies" placeholder="Allergies">
     <button onclick="addBackOfficeStudent()">Add Student</button>
     <button onclick="exportStudents()">Export Students</button>
     <button onclick="importStudents()">Import Students</button>
     <button onclick="downloadTemplate()">Download Template</button>
   </div>
 
-  <!-- Settings Page -->
   <div id="settingsPage" class="page">
     <h2>Settings</h2>
     <label>Overdraft Limit (£):<input type="number" id="overdraftLimit"></label><br>
@@ -107,7 +103,6 @@ th { background:#4b4b7b; color:#fff; }
     <button onclick="saveSettings()">Save Settings</button>
   </div>
 
-  <!-- Parent Pre-Order -->
   <div id="parentPage" class="page">
     <h2>Parent Pre-Order</h2>
     <select id="parentSelectStudent"></select>
@@ -116,8 +111,7 @@ th { background:#4b4b7b; color:#fff; }
   </div>
 </div>
 
-<!-- Popups -->
-<div id="studentPopup" class="popup hidden">
+<div id="studentPopup" class="popup">
   <div class="popupContent">
     <h3>Select Student</h3>
     <input type="text" id="searchStudent" placeholder="Search" onkeyup="filterStudents()">
@@ -126,7 +120,7 @@ th { background:#4b4b7b; color:#fff; }
   </div>
 </div>
 
-<div id="alertsPopup" class="popup hidden">
+<div id="alertsPopup" class="popup">
   <div class="popupContent">
     <h3>Alerts</h3>
     <div id="alertsContainer"></div>
@@ -135,32 +129,13 @@ th { background:#4b4b7b; color:#fff; }
 </div>
 
 <script>
-// -------------------- DATA --------------------
-let role=null;
-let basket=[];
-let students=JSON.parse(localStorage.getItem('students'))||[
-  {name:"Alice Smith",year:"S1",balance:20,noSchoolFood:false,parentApproval:false,allergies:"Peanuts"},
-  {name:"Bob Jones",year:"S2",balance:5,noSchoolFood:true,parentApproval:false,allergies:""},
-  {name:"Charlie Brown",year:"S3",balance:-5,noSchoolFood:false,parentApproval:true,allergies:"Gluten"}
-];
-let items=JSON.parse(localStorage.getItem('items'))||[
-  {barcode:"100001",name:"Sandwich",price:2.50,stock:20},
-  {barcode:"100002",name:"Juice",price:1.20,stock:30},
-  {barcode:"100003",name:"Snack Bar",price:0.80,stock:15},
-  {barcode:"100004",name:"Salad",price:3.00,stock:10}
-];
+let role=null, basket=[];
+let students=JSON.parse(localStorage.getItem('students'))||[];
+let items=JSON.parse(localStorage.getItem('items'))||[];
 let settings=JSON.parse(localStorage.getItem('settings'))||{overdraft:-10,tax:0,dailyCap:10,receiptPrinting:"Enabled"};
 let parentPreorders=JSON.parse(localStorage.getItem('preorders'))||{};
 
-// -------------------- SAVE --------------------
-function saveAll(){
-  localStorage.setItem('students',JSON.stringify(students));
-  localStorage.setItem('items',JSON.stringify(items));
-  localStorage.setItem('settings',JSON.stringify(settings));
-  localStorage.setItem('preorders',JSON.stringify(parentPreorders));
-}
-
-// -------------------- LOGIN --------------------
+// --- Login ---
 function login(){
   const u=document.getElementById("username").value.trim();
   const p=document.getElementById("password").value.trim();
@@ -168,13 +143,21 @@ function login(){
     role=u; 
     document.getElementById("loginOverlay").style.display="none"; 
     document.getElementById("nav").classList.remove("hidden"); 
-    showPage('till'); renderItems(); renderBackOffice(); renderParentPage(); loadSettings();
+    showPage('tillPage'); 
+    renderItems(); renderBackOffice(); renderParentPage(); loadSettings();
   } else document.getElementById("loginError").style.display="block";
 }
-function logout(){location.reload();}
-function showPage(page){['tillPage','backofficePage','settingsPage','parentPage'].forEach(p=>document.getElementById(p).classList.remove('active')); document.getElementById(page).classList.add('active'); renderItems(); renderBackOffice(); renderParentPage();}
 
-// -------------------- TILL --------------------
+function logout(){location.reload();}
+function showPage(page){
+  ['tillPage','backofficePage','settingsPage','parentPage'].forEach(p=>document.getElementById(p).classList.remove('active'));
+  document.getElementById(page).classList.add('active');
+  if(page==='tillPage') renderItems();
+  if(page==='backofficePage') renderBackOffice();
+  if(page==='parentPage') renderParentPage();
+}
+
+// ----------------- TILL -----------------
 function renderItems(){ 
   const grid=document.getElementById('itemsGrid'); grid.innerHTML='';
   items.forEach((i,index)=>{
@@ -198,9 +181,9 @@ function updateBasket(){
   document.getElementById('basketTotal').textContent=total.toFixed(2); 
 }
 
-// -------------------- CHECKOUT --------------------
-function startCheckout(){renderStudentPopup(); document.getElementById('studentPopup').classList.remove('hidden');}
-function closeStudentPopup(){document.getElementById('studentPopup').classList.add('hidden');}
+// ----------------- CHECKOUT -----------------
+function startCheckout(){renderStudentPopup(); document.getElementById('studentPopup').style.display='flex';}
+function closeStudentPopup(){document.getElementById('studentPopup').style.display='none';}
 function renderStudentPopup(){ 
   const list=document.getElementById('studentList'); list.innerHTML=''; 
   students.forEach((s,idx)=>{
@@ -226,7 +209,7 @@ function checkoutStudent(idx){
   basket=[]; updateBasket(); saveAll(); closeStudentPopup(); renderItems();
 }
 
-// -------------------- BACK OFFICE --------------------
+// ----------------- BACK OFFICE -----------------
 function renderBackOffice(){ 
   const grid=document.getElementById('backofficeItemsGrid'); grid.innerHTML='';
   items.forEach((i,idx)=>{ 
@@ -242,13 +225,15 @@ function renderBackOffice(){
     grid.appendChild(btn); 
   });
 }
+
 function addBackOfficeItem(){ 
   const n=document.getElementById('newItemName').value; 
   const p=parseFloat(document.getElementById('newItemPrice').value); 
   const b=document.getElementById('newItemBarcode').value; 
   const s=parseInt(document.getElementById('newItemStock').value); 
-  if(n && !isNaN(p)){ items.push({name:n,price:p,barcode:b,stock:s||0}); saveAll(); renderBackOffice(); }
+  if(n && !isNaN(p)){ items.push({name:n,price:p,barcode:b,stock:s||0}); saveAll(); renderBackOffice(); renderItems(); }
 }
+
 function addBackOfficeStudent(){ 
   const n=document.getElementById('newStudentName').value; 
   const y=document.getElementById('newStudentYear').value; 
@@ -258,11 +243,12 @@ function addBackOfficeStudent(){
   const alg=document.getElementById('newStudentAllergies').value; 
   students.push({name:n,year:y,balance:b,noSchoolFood:nsf,parentApproval:pa,allergies:alg}); saveAll(); renderBackOffice(); 
 }
+
 function exportStudents(){ const data='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(students)); const a=document.createElement('a'); a.href=data; a.download='students.json'; a.click();}
 function importStudents(){ const input=document.createElement('input'); input.type='file'; input.accept='.json'; input.onchange=()=>{ const reader=new FileReader(); reader.onload=e=>{ students=JSON.parse(e.target.result); saveAll(); renderBackOffice(); }; reader.readAsText(input.files[0]); }; input.click();}
 function downloadTemplate(){ const template=[{name:"Student Name",year:"S1",balance:0,noSchoolFood:false,parentApproval:false,allergies:""}]; const data='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(template)); const a=document.createElement('a'); a.href=data; a.download='template.json'; a.click();}
 
-// -------------------- SETTINGS --------------------
+// ----------------- SETTINGS -----------------
 function saveSettings(){ 
   settings.overdraft=parseFloat(document.getElementById('overdraftLimit').value)||settings.overdraft; 
   settings.tax=parseFloat(document.getElementById('taxRate').value)||0; 
@@ -277,30 +263,29 @@ function loadSettings(){
   document.getElementById('receiptPrinting').value=settings.receiptPrinting; 
 }
 
-// -------------------- ALERTS --------------------
+// ----------------- ALERTS -----------------
 function showAlert(msg){ 
   const container=document.getElementById('alertsContainer'); 
   const div=document.createElement('div'); div.className='alert'; div.textContent=msg; container.appendChild(div); 
-  document.getElementById('alertsPopup').classList.remove('hidden'); 
+  document.getElementById('alertsPopup').style.display='flex'; 
 }
-function closeAlerts(){ document.getElementById('alertsPopup').classList.add('hidden'); document.getElementById('alertsContainer').innerHTML=''; }
+function closeAlerts(){ document.getElementById('alertsPopup').style.display='none'; document.getElementById('alertsContainer').innerHTML=''; }
 
-// -------------------- PARENT PREORDER --------------------
+// ----------------- PARENT PREORDER -----------------
 function renderParentPage(){ 
   const sel=document.getElementById('parentSelectStudent'); sel.innerHTML=''; 
   students.forEach((s,i)=>{ const opt=document.createElement('option'); opt.value=i; opt.textContent=s.name; sel.appendChild(opt); });
   const grid=document.getElementById('parentItemsGrid'); grid.innerHTML='';
   items.forEach((i,idx)=>{
-    const btn=document.createElement('button'); btn.className='itemBtn'; btn.textContent=`${i.name}\n£${i.price.toFixed(2)}\nStock:${i.stock}`;
-    btn.onclick=()=>{ 
-      if(!parentPreorders[i.barcode]) parentPreorders[i.barcode]=[]; 
-      parentPreorders[i.barcode].push(sel.value); saveAll(); alert('Pre-ordered!'); 
-    };
-    grid.appendChild(btn);
+    const btn=document.createElement('button'); btn.className='itemBtn'; btn.textContent=`${i.name}\n£${i.price.toFixed(2)}\nStock:${i.stock}`; 
+    btn.onclick=()=>{ if(!parentPreorders[i.name]) parentPreorders[i.name]=[]; parentPreorders[i.name].push(i.name); saveAll(); showAlert(`Added ${i.name} to pre-order`); }; 
+    grid.appendChild(btn); 
   });
 }
-function confirmParentPreorder(){ alert('Parent pre-orders saved.'); saveAll(); }
-loadSettings(); renderItems(); renderBackOffice(); renderParentPage();
+function confirmParentPreorder(){ alert('Parent pre-order saved'); saveAll(); }
+
+// --- SAVE TO LOCALSTORAGE ON REFRESH ---
+window.addEventListener('beforeunload', saveAll);
 </script>
 </body>
 </html>
