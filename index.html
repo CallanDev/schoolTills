@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,33 +7,33 @@
 <title>School Till System</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  body { font-family:'Roboto',sans-serif; margin:0; padding:0; background:#f0f2f5; }
-  header { background:#1e1e2f; color:#fff; padding:15px; text-align:center; font-size:1.5em; }
-  #loginOverlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:999; }
-  #loginBox { background:#fff; padding:30px; border-radius:10px; width:350px; text-align:center; box-shadow:0 0 20px rgba(0,0,0,0.3); }
-  #loginBox input { width:80%; padding:10px; margin:10px 0; border-radius:5px; border:1px solid #ccc; }
-  #loginBox button { padding:10px 20px; border:none; border-radius:5px; background:#1e1e2f; color:#fff; cursor:pointer; font-weight:700; }
-  .hidden { display:none; }
-  #nav { background:#2b2b45; padding:10px; display:flex; gap:10px; }
-  #nav button { padding:10px 15px; border:none; border-radius:5px; cursor:pointer; background:#4b4b7b; color:#fff; font-weight:600; }
-  #main { padding:20px; }
-  .page { display:none; }
-  .active { display:block; }
-  #itemsGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:15px; }
-  .itemBtn { padding:20px; background:#fff; border:none; border-radius:10px; cursor:pointer; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center; transition:0.2s; }
-  .itemBtn:hover { transform:scale(1.05); background:#e3e3e3; }
-  #basket { margin-top:20px; background:#fff; padding:15px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-  #basket h3 { margin-top:0; }
-  .popup { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; }
-  .popupContent { background:#fff; padding:20px; border-radius:10px; width:600px; max-height:80%; overflow-y:auto; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
-  .studentEntry, .alert { padding:10px; margin:5px 0; cursor:pointer; border-radius:5px; }
-  .studentEntry:hover { background:#f0f0f0; }
-  .alert { background:#ffefef; color:#b00; }
-  table { width:100%; border-collapse:collapse; margin-top:10px; }
-  table, th, td { border:1px solid #ccc; }
-  th, td { padding:8px; text-align:left; }
-  th { background:#4b4b7b; color:#fff; }
-  .draggable { cursor:grab; }
+body { font-family:'Roboto',sans-serif; margin:0; padding:0; background:#f0f2f5; }
+header { background:#1e1e2f; color:#fff; padding:15px; text-align:center; font-size:1.5em; }
+#loginOverlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:999; }
+#loginBox { background:#fff; padding:30px; border-radius:10px; width:350px; text-align:center; box-shadow:0 0 20px rgba(0,0,0,0.3); }
+#loginBox input { width:80%; padding:10px; margin:10px 0; border-radius:5px; border:1px solid #ccc; }
+#loginBox button { padding:10px 20px; border:none; border-radius:5px; background:#1e1e2f; color:#fff; cursor:pointer; font-weight:700; }
+.hidden { display:none; }
+#nav { background:#2b2b45; padding:10px; display:flex; gap:10px; }
+#nav button { padding:10px 15px; border:none; border-radius:5px; cursor:pointer; background:#4b4b7b; color:#fff; font-weight:600; }
+#main { padding:20px; }
+.page { display:none; }
+.active { display:block; }
+#itemsGrid, #backofficeItemsGrid, #parentItemsGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:15px; }
+.itemBtn { padding:20px; background:#fff; border:none; border-radius:10px; cursor:pointer; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center; transition:0.2s; }
+.itemBtn:hover { transform:scale(1.05); background:#e3e3e3; }
+#basket { margin-top:20px; background:#fff; padding:15px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+#basket h3 { margin-top:0; }
+.popup { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; }
+.popupContent { background:#fff; padding:20px; border-radius:10px; width:700px; max-height:80%; overflow-y:auto; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
+.studentEntry, .alert { padding:10px; margin:5px 0; cursor:pointer; border-radius:5px; }
+.studentEntry:hover { background:#f0f0f0; }
+.alert { background:#ffefef; color:#b00; }
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+table, th, td { border:1px solid #ccc; }
+th, td { padding:8px; text-align:left; }
+th { background:#4b4b7b; color:#fff; }
+.draggable { cursor:grab; }
 </style>
 </head>
 <body>
@@ -134,51 +135,87 @@
 </div>
 
 <script>
+// -------------------- DATA --------------------
 let role=null;
 let basket=[];
-let students=JSON.parse(localStorage.getItem('students')) || [
+let students=JSON.parse(localStorage.getItem('students'))||[
   {name:"Alice Smith",year:"S1",balance:20,noSchoolFood:false,parentApproval:false,allergies:"Peanuts"},
   {name:"Bob Jones",year:"S2",balance:5,noSchoolFood:true,parentApproval:false,allergies:""},
   {name:"Charlie Brown",year:"S3",balance:-5,noSchoolFood:false,parentApproval:true,allergies:"Gluten"}
 ];
-let items=JSON.parse(localStorage.getItem('items')) || [
+let items=JSON.parse(localStorage.getItem('items'))||[
   {barcode:"100001",name:"Sandwich",price:2.50,stock:20},
   {barcode:"100002",name:"Juice",price:1.20,stock:30},
   {barcode:"100003",name:"Snack Bar",price:0.80,stock:15},
   {barcode:"100004",name:"Salad",price:3.00,stock:10}
 ];
-let settings=JSON.parse(localStorage.getItem('settings')) || {overdraft:-10,tax:0,dailyCap:10,receiptPrinting:"Enabled"};
-let parentPreorders=JSON.parse(localStorage.getItem('preorders')) || {};
+let settings=JSON.parse(localStorage.getItem('settings'))||{overdraft:-10,tax:0,dailyCap:10,receiptPrinting:"Enabled"};
+let parentPreorders=JSON.parse(localStorage.getItem('preorders'))||{};
 
-function saveAll(){ localStorage.setItem('students',JSON.stringify(students)); localStorage.setItem('items',JSON.stringify(items)); localStorage.setItem('settings',JSON.stringify(settings)); localStorage.setItem('preorders',JSON.stringify(parentPreorders)); }
+// -------------------- SAVE --------------------
+function saveAll(){
+  localStorage.setItem('students',JSON.stringify(students));
+  localStorage.setItem('items',JSON.stringify(items));
+  localStorage.setItem('settings',JSON.stringify(settings));
+  localStorage.setItem('preorders',JSON.stringify(parentPreorders));
+}
 
-// Login
+// -------------------- LOGIN --------------------
 function login(){
   const u=document.getElementById("username").value.trim();
   const p=document.getElementById("password").value.trim();
   if((u==="Cashier"||u==="Manager"||u==="Admin"||u==="Parent") && p==="Mabelcat1CC!!"){
-    role=u; document.getElementById("loginOverlay").style.display="none"; document.getElementById("nav").classList.remove("hidden"); showPage('till');
-    renderItems(); renderBackOffice(); renderParentPage();
+    role=u; 
+    document.getElementById("loginOverlay").style.display="none"; 
+    document.getElementById("nav").classList.remove("hidden"); 
+    showPage('till'); renderItems(); renderBackOffice(); renderParentPage(); loadSettings();
   } else document.getElementById("loginError").style.display="block";
 }
-
 function logout(){location.reload();}
-function showPage(pagestr){['tillPage','backofficePage','settingsPage','parentPage'].forEach(p=>document.getElementById(p).classList.remove('active')); document.getElementById(pagestr+'').classList.add('active'); renderItems();}
+function showPage(page){['tillPage','backofficePage','settingsPage','parentPage'].forEach(p=>document.getElementById(p).classList.remove('active')); document.getElementById(page).classList.add('active'); renderItems(); renderBackOffice(); renderParentPage();}
 
-// Render Items
-function renderItems(){ const grid=document.getElementById('itemsGrid'); grid.innerHTML=''; items.forEach((i,index)=>{ const btn=document.createElement('button'); btn.className='itemBtn'; btn.textContent=`${i.name}\n£${i.price.toFixed(2)}\nStock:${i.stock}`; btn.onclick=()=>{ if(i.stock>0){basket.push(i); updateBasket();} else alert('Out of stock!'); }; grid.appendChild(btn); }); updateBasket(); }
+// -------------------- TILL --------------------
+function renderItems(){ 
+  const grid=document.getElementById('itemsGrid'); grid.innerHTML='';
+  items.forEach((i,index)=>{
+    const btn=document.createElement('button'); 
+    btn.className='itemBtn'; 
+    btn.textContent=`${i.name}\n£${i.price.toFixed(2)}\nStock:${i.stock}`;
+    btn.onclick=()=>{ 
+      if(i.stock>0){basket.push(i); updateBasket();}
+      else showAlert('Out of stock!'); 
+    }; 
+    grid.appendChild(btn);
+  }); 
+  updateBasket(); 
+}
 
-function updateBasket(){ const list=document.getElementById('basketList'); list.innerHTML=''; let total=0; basket.forEach(i=>{total+=i.price; const li=document.createElement('li'); li.textContent=`${i.name} £${i.price.toFixed(2)}`; list.appendChild(li);}); if(settings.tax>0) total+=total*(settings.tax/100); document.getElementById('basketTotal').textContent=total.toFixed(2); }
+function updateBasket(){ 
+  const list=document.getElementById('basketList'); list.innerHTML=''; 
+  let total=0; 
+  basket.forEach(i=>{total+=i.price; const li=document.createElement('li'); li.textContent=`${i.name} £${i.price.toFixed(2)}`; list.appendChild(li);}); 
+  if(settings.tax>0) total+=total*(settings.tax/100); 
+  document.getElementById('basketTotal').textContent=total.toFixed(2); 
+}
 
-// Checkout
+// -------------------- CHECKOUT --------------------
 function startCheckout(){renderStudentPopup(); document.getElementById('studentPopup').classList.remove('hidden');}
 function closeStudentPopup(){document.getElementById('studentPopup').classList.add('hidden');}
-function renderStudentPopup(){ const list=document.getElementById('studentList'); list.innerHTML=''; students.forEach((s,idx)=>{ const div=document.createElement('div'); div.className='studentEntry'; div.textContent=`${s.name} (${s.year}) Balance: £${s.balance.toFixed(2)} Allergies: ${s.allergies}`; div.onclick=()=>checkoutStudent(idx); list.appendChild(div); }); }
-function filterStudents(){const q=document.getElementById('searchStudent').value.toLowerCase(); renderStudentPopup(); document.querySelectorAll('.studentEntry').forEach((div,i)=>{if(!students[i].name.toLowerCase().includes(q)) div.style.display='none';});}
+function renderStudentPopup(){ 
+  const list=document.getElementById('studentList'); list.innerHTML=''; 
+  students.forEach((s,idx)=>{
+    const div=document.createElement('div'); 
+    div.className='studentEntry'; 
+    div.textContent=`${s.name} (${s.year}) Balance: £${s.balance.toFixed(2)} Allergies:${s.allergies} NoSchoolFood:${s.noSchoolFood} ParentApproval:${s.parentApproval}`;
+    div.onclick=()=>checkoutStudent(idx); 
+    list.appendChild(div);
+  });
+}
+function filterStudents(){const q=document.getElementById('searchStudent').value.toLowerCase(); document.querySelectorAll('.studentEntry').forEach((div,i)=>{div.style.display=students[i].name.toLowerCase().includes(q)?'block':'none';});}
 
 function checkoutStudent(idx){
   const s=students[idx];
-  const total=basket.reduce((a,i)=>a+i.price,0); 
+  let total=basket.reduce((a,i)=>a+i.price,0); 
   if(s.noSchoolFood && role==='Cashier'){showAlert('NO SCHOOL FOOD! Manager/Admin approval needed.'); return;}
   if(s.parentApproval && role==='Cashier'){showAlert('Parent approval required.'); return;}
   if(s.balance-total<settings.overdraft){showAlert('Exceeds overdraft!'); return;}
@@ -189,34 +226,81 @@ function checkoutStudent(idx){
   basket=[]; updateBasket(); saveAll(); closeStudentPopup(); renderItems();
 }
 
-// Back Office
+// -------------------- BACK OFFICE --------------------
 function renderBackOffice(){ 
   const grid=document.getElementById('backofficeItemsGrid'); grid.innerHTML='';
-  items.forEach((i,idx)=>{ const btn=document.createElement('div'); btn.className='itemBtn draggable'; btn.textContent=`${i.name}\n£${i.price.toFixed(2)}\nStock:${i.stock}`; btn.draggable=true; btn.ondragstart=(e)=>{e.dataTransfer.setData('text/plain',idx)}; btn.ondragover=(e)=>e.preventDefault(); btn.ondrop=(e)=>{ const from=+e.dataTransfer.getData('text'); const to=idx; const temp=items[from]; items[from]=items[to]; items[to]=temp; renderBackOffice(); saveAll(); }; grid.appendChild(btn); });
+  items.forEach((i,idx)=>{ 
+    const btn=document.createElement('div'); 
+    btn.className='itemBtn draggable'; 
+    btn.textContent=`${i.name}\n£${i.price.toFixed(2)}\nStock:${i.stock}`;
+    btn.draggable=true; 
+    btn.ondragstart=(e)=>{e.dataTransfer.setData('text/plain',idx)}; 
+    btn.ondragover=(e)=>e.preventDefault(); 
+    btn.ondrop=(e)=>{ 
+      const from=+e.dataTransfer.getData('text'); const to=idx; const temp=items[from]; items[from]=items[to]; items[to]=temp; renderBackOffice(); saveAll();
+    }; 
+    grid.appendChild(btn); 
+  });
+}
+function addBackOfficeItem(){ 
+  const n=document.getElementById('newItemName').value; 
+  const p=parseFloat(document.getElementById('newItemPrice').value); 
+  const b=document.getElementById('newItemBarcode').value; 
+  const s=parseInt(document.getElementById('newItemStock').value); 
+  if(n && !isNaN(p)){ items.push({name:n,price:p,barcode:b,stock:s||0}); saveAll(); renderBackOffice(); }
+}
+function addBackOfficeStudent(){ 
+  const n=document.getElementById('newStudentName').value; 
+  const y=document.getElementById('newStudentYear').value; 
+  const b=parseFloat(document.getElementById('newStudentBalance').value); 
+  const nsf=document.getElementById('newStudentNoFood').checked; 
+  const pa=document.getElementById('newStudentParent').checked; 
+  const alg=document.getElementById('newStudentAllergies').value; 
+  students.push({name:n,year:y,balance:b,noSchoolFood:nsf,parentApproval:pa,allergies:alg}); saveAll(); renderBackOffice(); 
+}
+function exportStudents(){ const data='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(students)); const a=document.createElement('a'); a.href=data; a.download='students.json'; a.click();}
+function importStudents(){ const input=document.createElement('input'); input.type='file'; input.accept='.json'; input.onchange=()=>{ const reader=new FileReader(); reader.onload=e=>{ students=JSON.parse(e.target.result); saveAll(); renderBackOffice(); }; reader.readAsText(input.files[0]); }; input.click();}
+function downloadTemplate(){ const template=[{name:"Student Name",year:"S1",balance:0,noSchoolFood:false,parentApproval:false,allergies:""}]; const data='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(template)); const a=document.createElement('a'); a.href=data; a.download='template.json'; a.click();}
+
+// -------------------- SETTINGS --------------------
+function saveSettings(){ 
+  settings.overdraft=parseFloat(document.getElementById('overdraftLimit').value)||settings.overdraft; 
+  settings.tax=parseFloat(document.getElementById('taxRate').value)||0; 
+  settings.dailyCap=parseFloat(document.getElementById('dailyCap').value)||10; 
+  settings.receiptPrinting=document.getElementById('receiptPrinting').value; 
+  saveAll(); alert('Settings saved'); 
+}
+function loadSettings(){ 
+  document.getElementById('overdraftLimit').value=settings.overdraft; 
+  document.getElementById('taxRate').value=settings.tax; 
+  document.getElementById('dailyCap').value=settings.dailyCap; 
+  document.getElementById('receiptPrinting').value=settings.receiptPrinting; 
 }
 
-function addBackOfficeItem(){ const n=document.getElementById('newItemName').value; const p=parseFloat(document.getElementById('newItemPrice').value); const b=document.getElementById('newItemBarcode').value; const s=parseInt(document.getElementById('newItemStock').value); if(n && !isNaN(p)){ items.push({name:n,price:p,barcode:b,stock:s||0}); saveAll(); renderBackOffice(); }}
-function addBackOfficeStudent(){ const n=document.getElementById('newStudentName').value; const y=document.getElementById('newStudentYear').value; const b=parseFloat(document.getElementById('newStudentBalance').value); const nsf=document.getElementById('newStudentNoFood').checked; const pa=document.getElementById('newStudentParent').checked; const alg=document.getElementById('newStudentAllergies').value; students.push({name:n,year:y,balance:b,noSchoolFood:nsf,parentApproval:pa,allergies:alg}); saveAll(); renderBackOffice(); }
-function exportStudents(){ const data='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(students)); const a=document.createElement('a'); a.href=data; a.download='students.json'; a.click();}
-function importStudents(){ const input=document.createElement('input'); input.type='file'; input.accept='.json'; input.onchange=()=>{ const reader=new FileReader(); reader.onload=e=>{ students=JSON.parse(e.target.result); saveAll(); }; reader.readAsText(input.files[0]); }; input.click();}
-function downloadTemplate(){ const template=[{name:"Student Name",year:"S1",balance:0,noSchoolFood:false,parentApproval:false,allergies:""}]; const data='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(template)); const a=document.createElement('a'); a.href=data; a.download='template.json'; a.click(); }
-
-// Settings
-function saveSettings(){ settings.overdraft=parseFloat(document.getElementById('overdraftLimit').value)||settings.overdraft; settings.tax=parseFloat(document.getElementById('taxRate').value)||0; settings.dailyCap=parseFloat(document.getElementById('dailyCap').value)||10; settings.receiptPrinting=document.getElementById('receiptPrinting').value; saveAll(); alert('Settings saved'); }
-function loadSettings(){ document.getElementById('overdraftLimit').value=settings.overdraft; document.getElementById('taxRate').value=settings.tax; document.getElementById('dailyCap').value=settings.dailyCap; document.getElementById('receiptPrinting').value=settings.receiptPrinting; }
-
-// Alerts
-function showAlert(msg){ const container=document.getElementById('alertsContainer'); const div=document.createElement('div'); div.className='alert'; div.textContent=msg; container.appendChild(div); document.getElementById('alertsPopup').classList.remove('hidden'); }
+// -------------------- ALERTS --------------------
+function showAlert(msg){ 
+  const container=document.getElementById('alertsContainer'); 
+  const div=document.createElement('div'); div.className='alert'; div.textContent=msg; container.appendChild(div); 
+  document.getElementById('alertsPopup').classList.remove('hidden'); 
+}
 function closeAlerts(){ document.getElementById('alertsPopup').classList.add('hidden'); document.getElementById('alertsContainer').innerHTML=''; }
 
-// Parent Preorder
-function renderParentPage(){ const sel=document.getElementById('parentSelectStudent'); sel.innerHTML=''; students.forEach((s,i)=>{ const opt=document.createElement('option'); opt.value=i; opt.textContent=s.name; sel.appendChild(opt); }); const grid=document.getElementById('parentItemsGrid'); grid.innerHTML=''; items.forEach((i,idx)=>{ const btn=document.createElement('button'); btn.className='itemBtn'; btn.textContent=`${i.name}\n£${i.price.toFixed(2)}\nStock:${i.stock}`; btn.onclick=()=>{ if(!parentPreorders[i.barcode]) parentPreorders[i.barcode]=[]; parentPreorders[i.barcode].push(sel.value); saveAll(); alert('Pre-ordered!'); }; grid.appendChild(btn); }); }
-function confirmParentPreorder(){alert('Parent pre-orders saved.'); saveAll();}
-loadSettings();
-renderItems();
-renderBackOffice();
-renderParentPage();
+// -------------------- PARENT PREORDER --------------------
+function renderParentPage(){ 
+  const sel=document.getElementById('parentSelectStudent'); sel.innerHTML=''; 
+  students.forEach((s,i)=>{ const opt=document.createElement('option'); opt.value=i; opt.textContent=s.name; sel.appendChild(opt); });
+  const grid=document.getElementById('parentItemsGrid'); grid.innerHTML='';
+  items.forEach((i,idx)=>{
+    const btn=document.createElement('button'); btn.className='itemBtn'; btn.textContent=`${i.name}\n£${i.price.toFixed(2)}\nStock:${i.stock}`;
+    btn.onclick=()=>{ 
+      if(!parentPreorders[i.barcode]) parentPreorders[i.barcode]=[]; 
+      parentPreorders[i.barcode].push(sel.value); saveAll(); alert('Pre-ordered!'); 
+    };
+    grid.appendChild(btn);
+  });
+}
+function confirmParentPreorder(){ alert('Parent pre-orders saved.'); saveAll(); }
+loadSettings(); renderItems(); renderBackOffice(); renderParentPage();
 </script>
 </body>
 </html>
-
