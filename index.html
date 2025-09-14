@@ -81,12 +81,14 @@ th {background:#4b4b7b;color:#fff;}
     <h3>Items</h3>
     <button onclick="openItemPopup()">Add Item</button>
     <button onclick="exportItems()">Export Items CSV</button>
+    <button onclick="downloadItemTemplate()">Download Template</button>
     <input type="file" id="importItemsFile" accept=".csv" onchange="importItems(event)">
     <table id="itemsTable"><thead><tr><th>Code</th><th>Name</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody></tbody></table>
 
     <h3>Students</h3>
     <button onclick="openStudentPopup()">Add Student</button>
     <button onclick="exportStudents()">Export Students CSV</button>
+    <button onclick="downloadStudentTemplate()">Download Template</button>
     <input type="file" id="importStudentsFile" accept=".csv" onchange="importStudents(event)">
     <table id="studentsTable"><thead><tr><th>Name</th><th>Type</th><th>Year</th><th>Balance</th><th>No School Food</th><th>Parent Approval</th><th>Actions</th></tr></thead><tbody></tbody></table>
   </div>
@@ -192,7 +194,7 @@ function loadSettings(){document.getElementById("overdraftLimit").value=settings
 function showPopup(content){document.getElementById("popupContent").innerHTML=content+'<br><button onclick="closePopup()">Close</button>'; document.getElementById("popup").classList.remove("hidden");}
 function closePopup(){document.getElementById("popup").classList.add("hidden");}
 
-// ---------------- ADD/EDIT/DELETE ----------------
+// ---------------- ADD/EDIT/DELETE ITEMS ----------------
 function openItemPopup(){showPopup(`<h3>Add Item</h3>
 <label>Name: <input type="text" id="newItemName"></label>
 <label>Price: <input type="number" id="newItemPrice" step="0.01"></label>
@@ -207,7 +209,7 @@ function editItem(i){const item=items[i]; showPopup(`<h3>Edit Item</h3>
 <button onclick="saveEditItem(${i})">Save</button>`);}
 function saveEditItem(i){items[i].name=document.getElementById("editItemName").value; items[i].price=parseFloat(document.getElementById("editItemPrice").value); items[i].stock=parseInt(document.getElementById("editItemStock").value)||0; saveAll(); renderItems(); renderTables(); closePopup();}
 
-// ---------------- STUDENTS ----------------
+// ---------------- ADD/EDIT/DELETE STUDENTS ----------------
 function openStudentPopup(){showPopup(`<h3>Add Student</h3>
 <label>Name: <input type="text" id="newStudentName"></label>
 <label>Type: <select id="newStudentType"><option value="Student">Student</option><option value="Guest">Guest</option><option value="Staff">Staff</option></select></label>
@@ -234,7 +236,10 @@ function exportStudents(){const csv='Name,Type,Year,Balance,NoSchoolFood,ParentA
 function downloadCSV(data,filename){const blob=new Blob([data],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);}
 function importItems(e){const file=e.target.files[0]; const reader=new FileReader(); reader.onload=function(ev){const lines=ev.target.result.split('\n').slice(1); lines.forEach(l=>{const [code,name,price,stock]=l.split(','); if(name){items.push({code,name,price:parseFloat(price),stock:parseInt(stock)||0});}}); saveAll(); renderItems(); renderTables();}; reader.readAsText(file);}
 function importStudents(e){const file=e.target.files[0]; const reader=new FileReader(); reader.onload=function(ev){const lines=ev.target.result.split('\n').slice(1); lines.forEach(l=>{const [name,type,year,balance,noFood,parentApproval]=l.split(','); if(name){students.push({name,type,year,balance:parseFloat(balance)||0,noSchoolFood:noFood==='true',parentApproval:parentApproval==='true'});}}); saveAll(); renderTables();}; reader.readAsText(file);}
+function downloadItemTemplate(){downloadCSV('Code,Name,Price,Stock\n','items_template.csv');}
+function downloadStudentTemplate(){downloadCSV('Name,Type,Year,Balance,NoSchoolFood,ParentApproval\n','students_template.csv');}
 </script>
 
 </body>
 </html>
+
